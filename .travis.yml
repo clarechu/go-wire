@@ -1,0 +1,25 @@
+language: go
+
+go:
+  - "1.13.x"
+
+git:
+  depth: 1
+
+branches:
+  only:
+    - master
+
+go_import_path: ClareChu/go-wire
+
+install: true
+
+env:
+  - GO111MODULE=on
+
+script:
+  - go test -v ./... -coverprofile=coverage.out -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
+
