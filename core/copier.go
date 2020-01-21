@@ -1,1 +1,1 @@
-package merge
+package core
