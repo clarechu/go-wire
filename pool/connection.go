@@ -35,7 +35,7 @@ func (pool *BasicConnectionPool) Create() (err error) {
 	for i := 0; i < INITIAL_POOL_SIZE; i++ {
 		db, err := gorm.Open(DIALECT, dbUrl)
 		if err != nil {
-			return
+			return err
 		}
 		pool.ConnectionPool = append(pool.ConnectionPool, db)
 	}
