@@ -44,10 +44,10 @@ func mergeValue(to reflect.Value, from reflect.Value) {
 				}
 			case reflect.Bool:
 				if tKind == reflect.Bool && tField.Name == fField.Name {
-/*					if !isZero(fVa.FieldByName(fField.Name)) {
-						break
-					}*/
-					tVa.Field(i).SetBool(fVa.FieldByName(fField.Name).Bool())
+					/*					if !isZero(fVa.FieldByName(fField.Name)) {
+										break
+									}*/
+					tVa.Field(j).SetBool(fVa.FieldByName(fField.Name).Bool())
 					break
 				}
 			case reflect.Ptr:
@@ -59,9 +59,23 @@ func mergeValue(to reflect.Value, from reflect.Value) {
 					mergeValue(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
 					break
 				}
+			case reflect.Array:
+				if tKind == fKind && tField.Name == fField.Name {
+					mergeArray(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
+					break
+				}
+				break
+			case reflect.Slice:
+				if tKind == fKind && tField.Name == fField.Name {
+					mergeSlice(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
+					break
+				}
+				break
 			case reflect.Struct:
 				// to and from is Struct
 				if tKind == reflect.Struct && tField.Name == fField.Name {
+					fmt.Println(tKind, "...", fKind)
+					fmt.Println(tField.Name, "...", fField.Name)
 					if isZero(fVa.FieldByName(fField.Name)) {
 						break
 					}
@@ -74,7 +88,7 @@ func mergeValue(to reflect.Value, from reflect.Value) {
 					if isZero(fVa.FieldByName(fField.Name)) {
 						break
 					} else {
-						tVa.Field(i).Set(fVa.FieldByName(fField.Name))
+						tVa.Field(j).Set(fVa.FieldByName(fField.Name))
 						break
 					}
 				}
@@ -139,21 +153,40 @@ func mergeSlice(to reflect.Value, from reflect.Value) {
 	for i := 0; i < from.Len(); i++ {
 		j := 0
 		if j < toLen {
-			mergeValue(to.Index(j), from.Index(i))
+			if to.Index(j).Kind() == reflect.Ptr || to.Index(j).Kind() == reflect.Struct {
+				mergeValue(to.Index(j), from.Index(i))
+				continue
+			}
+			to.Set(reflect.Append(to, from.Index(i)))
 			j++
 			continue
 		} else {
-			var elem reflect.Value
-			typ := to.Type().Elem()
-			if typ.Kind() == reflect.Ptr {
-				elem = reflect.New(typ.Elem())
-			}
-			if typ.Kind() == reflect.Struct {
-				elem = reflect.New(typ).Elem()
-			}
-			mergeValue(elem, from.Index(i))
-			to.Set(reflect.Append(to, elem))
+			appendSlice(to, from, i)
 		}
 	}
 
 }
+
+func appendSlice(to reflect.Value, from reflect.Value, i int) {
+	if to.IsNil() {
+		mapValue := reflect.MakeSlice(from.Type(), 0, 0)
+		to.Set(mapValue)
+	}
+	var elem reflect.Value
+	typ := to.Type().Elem()
+	if typ.Kind() == reflect.Ptr {
+		elem = reflect.New(typ.Elem())
+		mergeValue(elem, from.Index(i))
+		to.Set(reflect.Append(to, elem))
+		return
+	}
+	if typ.Kind() == reflect.Struct {
+		elem = reflect.New(typ).Elem()
+		mergeValue(elem, from.Index(i))
+		to.Set(reflect.Append(to, elem))
+		return
+	}
+	to.Set(reflect.Append(to, from.Index(i)))
+}
+
+func mergeArray(to reflect.Value, from reflect.Value) {}

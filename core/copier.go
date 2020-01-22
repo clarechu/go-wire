@@ -49,8 +49,6 @@ func GetField(v reflect.Value) {
 	}
 }
 
-
-
 func replace(to interface{}, from interface{}) error {
 	toVal := reflect.ValueOf(to)
 	fromVal := reflect.ValueOf(from)
@@ -79,21 +77,21 @@ func Copy(to reflect.Value, from reflect.Value) {
 			fField := ft.Field(i)
 			fKind := fVa.Field(i).Kind()
 			switch fKind {
-/*			case reflect.Int:
-				if tKind == reflect.Int && tField.Name == fField.Name {
-					tVa.Field(i).SetInt(fVa.FieldByName(fField.Name).Int())
-					break
-				}
-			case reflect.Int64:
-				if tKind == reflect.Int64 && tField.Name == fField.Name {
-					tVa.Field(i).Set(fVa.FieldByName(fField.Name))
-					break
-				}
-			case reflect.String:
-				if tKind == reflect.String && tField.Name == fField.Name {
-					tVa.Field(i).SetString(fVa.FieldByName(fField.Name).String())
-					break
-				}*/
+			/*			case reflect.Int:
+							if tKind == reflect.Int && tField.Name == fField.Name {
+								tVa.Field(i).SetInt(fVa.FieldByName(fField.Name).Int())
+								break
+							}
+						case reflect.Int64:
+							if tKind == reflect.Int64 && tField.Name == fField.Name {
+								tVa.Field(i).Set(fVa.FieldByName(fField.Name))
+								break
+							}
+						case reflect.String:
+							if tKind == reflect.String && tField.Name == fField.Name {
+								tVa.Field(i).SetString(fVa.FieldByName(fField.Name).String())
+								break
+							}*/
 			case reflect.Map:
 				if tField.Name == fField.Name && tKind == reflect.Map {
 					CopyMap(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
@@ -102,7 +100,7 @@ func Copy(to reflect.Value, from reflect.Value) {
 
 			case reflect.Bool:
 				if tKind == reflect.Bool && tField.Name == fField.Name {
-					tVa.Field(i).SetBool(fVa.FieldByName(fField.Name).Bool())
+					tVa.Field(j).SetBool(fVa.FieldByName(fField.Name).Bool())
 					break
 				}
 			case reflect.Ptr:
@@ -120,8 +118,11 @@ func Copy(to reflect.Value, from reflect.Value) {
 				}
 			default:
 				if tKind == fKind && tField.Name == fField.Name {
-					tVa.Field(i).Set(fVa.FieldByName(fField.Name))
+/*					fmt.Println(tKind, "...", fKind)
+					fmt.Println(tField.Name, "...", fField.Name)*/
+					tVa.Field(j).Set(fVa.FieldByName(fField.Name))
 					break
+
 				}
 			}
 		}

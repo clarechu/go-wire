@@ -14,6 +14,7 @@ type Foo struct {
 	Password   string            `json:"password"`
 	Bar        Bar               `json:"bar"`
 	MBar       map[string]string `json:"mBar"`
+	Strs       []string        `json:"strs"`
 	CreateTime time.Duration     `json:"createTime"`
 }
 
@@ -22,6 +23,7 @@ type Foos struct {
 	User     string             `json:"user"`
 	Password string             `json:"password"`
 	Bar      Bar                `json:"bar"`
+	Strs     []string         `json:"strs"`
 	MBar     *map[string]string `json:"mBar"`
 }
 
@@ -191,8 +193,6 @@ func Test_Replace1(t *testing.T) {
 	//assert.Equal(t, foos, bazs)
 	fmt.Println(fs)
 }
-
-
 
 func Test_Replace2(t *testing.T) {
 	from := &Baz{

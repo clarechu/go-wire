@@ -16,6 +16,7 @@ func Test_Merge(t *testing.T) {
 			Name: "qw",
 			Flag: false,
 		},
+		Strs: []string{"a", "b"},
 	}
 	to := &Foo{
 		Id: 11,
@@ -23,6 +24,7 @@ func Test_Merge(t *testing.T) {
 			Name: "aqw",
 			Flag: true,
 		},
+		//Strs: []string{"c", "b"},
 	}
 	err := Merge(to, from)
 	assert.Equal(t, nil, err)
