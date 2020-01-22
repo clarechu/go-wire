@@ -9,6 +9,7 @@ git:
 branches:
   only:
     - master
+    - merge
 
 go_import_path: ClareChu/go-wire
 
