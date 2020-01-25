@@ -6,24 +6,36 @@ import (
 	"reflect"
 )
 
+type Mold func(v reflect.Value) bool
+
 func Merge(to interface{}, from interface{}) error {
 	toVal := reflect.ValueOf(to)
 	fromVal := reflect.ValueOf(from)
 	if !isPtr(toVal) || !isPtr(fromVal) {
 		return errors.New("merge to value is unaddressable")
 	}
-	mergeValue(toVal, fromVal)
+	mergeValue(toVal, fromVal, isNil)
 	return nil
 }
 
-func mergeValue(to reflect.Value, from reflect.Value) {
+func Merges(to interface{}, from interface{}, mold Mold) error {
+	toVal := reflect.ValueOf(to)
+	fromVal := reflect.ValueOf(from)
+	if !isPtr(toVal) || !isPtr(fromVal) {
+		return errors.New("merge to value is unaddressable")
+	}
+	mergeValue(toVal, fromVal, mold)
+	return nil
+}
+
+func mergeValue(to reflect.Value, from reflect.Value, mold Mold) {
 	tVa := indirect(to)
 	tt := tVa.Type()
 	fVa := indirect(from)
 	ft := fVa.Type()
 	if tVa.Kind() == reflect.Slice {
 		if fVa.Kind() == reflect.Slice {
-			mergeSlice(tVa, fVa)
+			mergeSlice(tVa, fVa, mold)
 			return
 		}
 	}
@@ -36,7 +48,7 @@ func mergeValue(to reflect.Value, from reflect.Value) {
 			switch fKind {
 			case reflect.Map:
 				if tField.Name == fField.Name && tKind == reflect.Map {
-					if isZero(fVa.FieldByName(fField.Name)) {
+					if mold(fVa.FieldByName(fField.Name)) {
 						break
 					}
 					MergeMap(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
@@ -56,7 +68,7 @@ func mergeValue(to reflect.Value, from reflect.Value) {
 					if isZero(fVa.FieldByName(fField.Name)) {
 						break
 					}
-					mergeValue(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
+					mergeValue(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j), mold)
 					break
 				}
 			case reflect.Array:
@@ -67,7 +79,7 @@ func mergeValue(to reflect.Value, from reflect.Value) {
 				break
 			case reflect.Slice:
 				if tKind == fKind && tField.Name == fField.Name {
-					mergeSlice(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
+					mergeSlice(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j), mold)
 					break
 				}
 				break
@@ -79,7 +91,7 @@ func mergeValue(to reflect.Value, from reflect.Value) {
 					if isZero(fVa.FieldByName(fField.Name)) {
 						break
 					}
-					mergeValue(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j))
+					mergeValue(reflect.Indirect(to).Field(i), reflect.Indirect(from).Field(j), mold)
 					break
 
 				}
@@ -122,6 +134,35 @@ func MergeMap(to reflect.Value, from reflect.Value) {
 
 func isZero(v reflect.Value) bool {
 	switch v.Kind() {
+	case reflect.Func:
+		return v.IsNil()
+	case reflect.Map, reflect.Slice:
+		if v.IsNil() || v.Len() == 0 {
+			return true
+		}
+		return false
+	case reflect.Bool:
+		return v.Bool()
+	case reflect.Array:
+		z := true
+		for i := 0; i < v.Len(); i++ {
+			z = z && isZero(v.Index(i))
+		}
+		return z
+	case reflect.Struct:
+		z := true
+		for i := 0; i < v.NumField(); i++ {
+			z = z && isZero(v.Field(i))
+		}
+		return z
+	default:
+		z := reflect.Zero(v.Type())
+		return v.Interface() == z.Interface()
+	}
+}
+
+func isNil(v reflect.Value) bool {
+	switch v.Kind() {
 	case reflect.Func, reflect.Map, reflect.Slice:
 		return v.IsNil()
 	case reflect.Bool:
@@ -145,7 +186,7 @@ func isZero(v reflect.Value) bool {
 	}
 }
 
-func mergeSlice(to reflect.Value, from reflect.Value) {
+func mergeSlice(to reflect.Value, from reflect.Value, mold Mold) {
 	if from.IsZero() {
 		return
 	}
@@ -154,20 +195,20 @@ func mergeSlice(to reflect.Value, from reflect.Value) {
 		j := 0
 		if j < toLen {
 			if to.Index(j).Kind() == reflect.Ptr || to.Index(j).Kind() == reflect.Struct {
-				mergeValue(to.Index(j), from.Index(i))
+				mergeValue(to.Index(j), from.Index(i), mold)
 				continue
 			}
 			to.Set(reflect.Append(to, from.Index(i)))
 			j++
 			continue
 		} else {
-			appendSlice(to, from, i)
+			appendSlice(to, from, i, mold)
 		}
 	}
 
 }
 
-func appendSlice(to reflect.Value, from reflect.Value, i int) {
+func appendSlice(to reflect.Value, from reflect.Value, i int, mold Mold) {
 	if to.IsNil() {
 		mapValue := reflect.MakeSlice(from.Type(), 0, 0)
 		to.Set(mapValue)
@@ -176,13 +217,13 @@ func appendSlice(to reflect.Value, from reflect.Value, i int) {
 	typ := to.Type().Elem()
 	if typ.Kind() == reflect.Ptr {
 		elem = reflect.New(typ.Elem())
-		mergeValue(elem, from.Index(i))
+		mergeValue(elem, from.Index(i), mold)
 		to.Set(reflect.Append(to, elem))
 		return
 	}
 	if typ.Kind() == reflect.Struct {
 		elem = reflect.New(typ).Elem()
-		mergeValue(elem, from.Index(i))
+		mergeValue(elem, from.Index(i), mold)
 		to.Set(reflect.Append(to, elem))
 		return
 	}

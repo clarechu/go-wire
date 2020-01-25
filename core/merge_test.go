@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -24,7 +25,7 @@ func Test_Merge(t *testing.T) {
 			Name: "aqw",
 			Flag: true,
 		},
-		//Strs: []string{"c", "b"},
+		Strs: []string{"c", "b"},
 	}
 	err := Merge(to, from)
 	assert.Equal(t, nil, err)
@@ -137,4 +138,63 @@ func Test_Merge2(t *testing.T) {
 	assert.Equal(t, nil, err)
 	fmt.Println(to)
 
+}
+
+func Test_IsZero(t *testing.T) {
+	bar := &Bar{
+		Name: "asd",
+		Flag: false,
+	}
+
+	flag := isZero(reflect.ValueOf(bar))
+	assert.Equal(t, false, flag)
+	m := make(map[string]string)
+	flag = isZero(reflect.ValueOf(m))
+	assert.Equal(t, true, flag)
+
+	var mp = map[string]string{}
+	flag = isZero(reflect.ValueOf(mp))
+	assert.Equal(t, true, flag)
+
+	v := ""
+	flag = isZero(reflect.ValueOf(v))
+	assert.Equal(t, true, flag)
+
+	var str []string
+	flag = isZero(reflect.ValueOf(str))
+	assert.Equal(t, true, flag)
+
+	str = []string{"1"}
+	flag = isZero(reflect.ValueOf(str))
+	assert.Equal(t, false, flag)
+}
+
+
+func Test_IsNil(t *testing.T) {
+	bar := &Bar{
+		Name: "asd",
+		Flag: false,
+	}
+
+	flag := isNil(reflect.ValueOf(bar))
+	assert.Equal(t, false, flag)
+	m := make(map[string]string)
+	flag = isNil(reflect.ValueOf(m))
+	assert.Equal(t, false, flag)
+
+	var mp = map[string]string{}
+	flag = isNil(reflect.ValueOf(mp))
+	assert.Equal(t, false, flag)
+
+	v := ""
+	flag = isNil(reflect.ValueOf(v))
+	assert.Equal(t, true, flag)
+
+	var str []string
+	flag = isNil(reflect.ValueOf(str))
+	assert.Equal(t, true, flag)
+
+	str = []string{"1"}
+	flag = isNil(reflect.ValueOf(str))
+	assert.Equal(t, false, flag)
 }

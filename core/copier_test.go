@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -14,7 +13,7 @@ type Foo struct {
 	Password   string            `json:"password"`
 	Bar        Bar               `json:"bar"`
 	MBar       map[string]string `json:"mBar"`
-	Strs       []string        `json:"strs"`
+	Strs       []string          `json:"strs"`
 	CreateTime time.Duration     `json:"createTime"`
 }
 
@@ -23,7 +22,7 @@ type Foos struct {
 	User     string             `json:"user"`
 	Password string             `json:"password"`
 	Bar      Bar                `json:"bar"`
-	Strs     []string         `json:"strs"`
+	Strs     []string           `json:"strs"`
 	MBar     *map[string]string `json:"mBar"`
 }
 
@@ -54,38 +53,6 @@ func TestSetDefault(t *testing.T) {
 	}
 	Info(&foo)
 	fmt.Println(foo)
-}
-
-func Test_IsZero(t *testing.T) {
-	bar := &Bar{
-		Name: "asd",
-		Flag: false,
-	}
-
-	flag := isZero(reflect.ValueOf(bar))
-	assert.Equal(t, false, flag)
-	m := make(map[string]string)
-	flag = isZero(reflect.ValueOf(m))
-	assert.Equal(t, false, flag)
-
-	var mp = map[string]string{}
-	flag = isZero(reflect.ValueOf(mp))
-	assert.Equal(t, false, flag)
-
-	flag = isZero(reflect.ValueOf(mp))
-	assert.Equal(t, false, flag)
-
-	v := ""
-	flag = isZero(reflect.ValueOf(v))
-	assert.Equal(t, true, flag)
-
-	var str []string
-	flag = isZero(reflect.ValueOf(str))
-	assert.Equal(t, true, flag)
-
-	str = []string{"1"}
-	flag = isZero(reflect.ValueOf(str))
-	assert.Equal(t, false, flag)
 }
 
 func Test_Replace(t *testing.T) {
